@@ -4,13 +4,12 @@
   "description": "psd-admin-api",
   "scripts": {
     "start": "NODE_PORT=8086 node app",
-    "test": "./node_modules/mocha/bin/mocha test/**/*-test.js --reporter spec",
-    "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
+    "test": "./node_modules/mocha/bin/mocha test/**/*-test.js --reporter spec"
   },
   "main": "app.js",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.21.1",
     "body-parser": "^1.13.3",
     "cookie-parser": "^1.3.5",
     "cors": "^2.8.5",
