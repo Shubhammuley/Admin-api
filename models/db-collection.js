@@ -35,26 +35,37 @@ const updateTableLog = async ({ filterObj, infoToUpdate }) => {
   return await logTableModel.findOneAndUpdate(filterObj, infoToUpdate);
 };
 
-const listTableLog = async () => {
-  return await logTableModel.aggregate([
+const listTableLog = async ({
+  pageNo,
+  pageSize,
+  pageOffset,
+}) => {
+  const [result] = await logTableModel.aggregate([
     {
       $match: {
         status: { $ne: "pending" },
       },
     }, {
-        $project: {
-            id: '$_id',
-            _id: 0,
-            fileName: 1,
-            startTime: 1,
-            endTime: 1,
-            duration: 1,
-            status: 1,
-            errorSku: 1,
-            successSku: 1,
-            totalNumberOfRecord: 1,
-        }
+      $project: {
+        id: '$_id',
+        _id: 0,
+        fileName: 1,
+        startTime: 1,
+        endTime: 1,
+        duration: 1,
+        status: 1,
+        errorSku: 1,
+        successSku: 1,
+        totalNumberOfRecord: 1,
+      }
+    },
+    {
+      $facet: {
+        metaData: [{ $count: 'total' }, { $addFields: { page: pageNo } }],
+        data: [{ $skip: pageOffset }, { $limit: pageSize }],
+      },
     }]);
+  return result;
 };
 
 module.exports = Object.freeze({

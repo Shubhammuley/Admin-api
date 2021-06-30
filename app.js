@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json());
 app.use(cors());
 
-app.post('/api/v1/login',async(req,res)=>{
+app.post('/api/v1/login', async (req, res) => {
   try {
     console.log(req.body)
     const data = await getUserByCredential(req.body);
@@ -27,30 +27,38 @@ app.post('/api/v1/login',async(req,res)=>{
   }
 });
 
-app.get('/api/v1/get',async(req,res)=>{
+app.get('/api/v1/get', async (req, res) => {
   try {
     const data = await processingCron(req.query);
     res.send({
       status: 'success',
       data,
     });
-  } catch (e){
-    console.log('sss',e);
+  } catch (e) {
+    console.log('sss', e);
     res.send({
       status: 'error'
     });
   }
 });
 
-app.get('/api/v1/list/import-history',async(req,res)=>{
+app.get('/api/v1/list/import-history', async (req, res) => {
   try {
-    const data = await listTableLog();
+    const requestQuery = req.query;
+    const pageNo = parseInt(requestQuery.pageNo, 10) || 1;
+    const pageSize = parseInt(requestQuery.pageSize, 10) || 10;
+    const pageOffset = (pageNo - 1) * pageSize;
+    const data = await listTableLog({
+      pageNo,
+      pageSize,
+      pageOffset,
+    });
     res.send({
       status: 'success',
       data,
     });
-  } catch (e){
-    console.log('----------error',e);
+  } catch (e) {
+    console.log('----------error', e);
     res.send({
       status: 'error',
       data: e,
@@ -58,4 +66,4 @@ app.get('/api/v1/list/import-history',async(req,res)=>{
   }
 });
 
-app.listen(port,()=>console.log(`Express server listening on port ${port}`))
+app.listen(port, () => console.log(`Express server listening on port ${port}`))

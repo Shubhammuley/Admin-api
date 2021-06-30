@@ -61,7 +61,7 @@ async function processingCron() {
           key: 'shipping-groups',
           permission_set: 'write',
           namespace: "shipping.shipperhq",
-          resource_type: "variant", // Need to confirm
+          // resource_type: "variant", // Need to confirm
           resource_id: variantId,
         })
       }
@@ -78,8 +78,8 @@ async function processingCron() {
       infoToUpdate.endTime = new Date();
       if (!startTime) {
         infoToUpdate.startTime = start;
+        infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       }
-      infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       if (totalNumberOfRecord - recordEntered === 1) {
         if (errorSku.length) {
           infoToUpdate.status = "error";
@@ -88,6 +88,9 @@ async function processingCron() {
         }
         const begin = startTime || start;
         infoToUpdate.duration = infoToUpdate.endTime - begin;
+      }
+      if (recordEntered === 1) {
+        infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       }
       await updateTableLog({
         filterObj: { _id: String(record.logId) },
@@ -123,6 +126,9 @@ async function processingCron() {
         }
         const begin = startTime || start;
         infoToUpdate.duration = infoToUpdate.endTime - begin;
+      }
+      if (recordEntered === 1) {
+        infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       }
       await updateTableLog({
         filterObj: { _id: String(record.logId) },
