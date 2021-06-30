@@ -26,6 +26,57 @@ const updateWorkload = async ({ filterObj, infoToUpdate }) => {
   return await workloadModel.findOneAndUpdate(filterObj, infoToUpdate);
 }
 
+const removeAllWorkload = async () => {
+  return await workloadModel.deleteMany({});
+};
+
+const insertWorkload = async (csvData) => {
+  await removeAllWorkload();
+  return await workloadModel.insertMany(csvData);
+};
+
+const checkPendingWorkload = async () => {
+  return await workloadModel.find({
+    $or: [{ status: 'pending' }, { status: 'inProgress' }],
+  });
+};
+
+const getWorkloadDetails = async () => {
+  return await workloadModel.aggregate([
+    {
+      $match: {
+        $or: [{ status: 'pending' }, { status: 'inProgress' }],
+      },
+    },
+    {
+      $lookup: {
+        from: 'logTable',
+        let: { logId: '$logId' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: [ '$_id', '$$logId' ],
+              },
+            },
+          },
+        ],
+        as: 'logDetails',
+      },
+    },
+    {
+      $unwind: {
+        path: '$logDetails',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+  ]);
+};
+
+const abortUpdate = async ({ filterObj, infoToUpdate }) => {
+  return await workloadModel.updateMany(filterObj, infoToUpdate);
+};
+
 // log-table-schema
 const findOneTableLog = async ({ filterObj }) => {
   return await logTableModel.findOne(filterObj);
@@ -68,12 +119,21 @@ const listTableLog = async ({
   return result;
 };
 
+const insertTableLog = async (logData) => {
+  return await logTableModel.create(logData);
+};
+
 module.exports = Object.freeze({
   getUserByCredential,
   addAdminUser,
   findOneWorkload,
   updateWorkload,
+  insertWorkload,
   findOneTableLog,
   updateTableLog,
   listTableLog,
+  insertTableLog,
+  checkPendingWorkload,
+  getWorkloadDetails,
+  abortUpdate,
 });
