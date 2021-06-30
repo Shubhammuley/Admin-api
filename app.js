@@ -1,8 +1,10 @@
 const express = require('express')
 const cors = require('cors');
 const bodyParser = require("body-parser");
-const db = require('./db-connection')
-const { getUserByCredential } = require('./models/db-collection')
+const db = require('./db-connection');
+const { getUserByCredential, listTableLog } = require('./models/db-collection');
+const { processingCron } = require('./use-case/processing-cron');
+
 const port = process.env.NODE_PORT || 8000;
 const app = express();
 
@@ -21,6 +23,37 @@ app.post('/api/v1/login',async(req,res)=>{
   } catch {
     res.send({
       status: 'error'
+    });
+  }
+});
+
+app.get('/api/v1/get',async(req,res)=>{
+  try {
+    const data = await processingCron(req.query);
+    res.send({
+      status: 'success',
+      data,
+    });
+  } catch (e){
+    console.log('sss',e);
+    res.send({
+      status: 'error'
+    });
+  }
+});
+
+app.get('/api/v1/list/import-history',async(req,res)=>{
+  try {
+    const data = await listTableLog();
+    res.send({
+      status: 'success',
+      data,
+    });
+  } catch (e){
+    console.log('----------error',e);
+    res.send({
+      status: 'error',
+      data: e,
     });
   }
 });
