@@ -8,6 +8,9 @@ const {
   getWorkloadDetails,
   abortUpdate,
   updateTableLog,
+  getWorkload,
+  findOneTableLog,
+  getLastImportDetails,
 } = require("../models/db-collection");
 const express = require("express");
 const router = express.Router();
@@ -99,7 +102,8 @@ router.post("/v1/upload-csv-file", (req, res) => {
           await insertWorkload(csvData)
             .then(() => {
               res.status(200).send({
-                message: "CSV file imported successfully",
+                message:
+                  "File uploaded successfully. Import is now in progress.",
               });
             })
             .catch((err) => {
@@ -134,22 +138,47 @@ router.get("/v1/get/details", async (req, res) => {
 
 router.post("/v1/abort", async (req, res) => {
   try {
-    const pendingWorkload = await checkPendingWorkload();
+    const pendingWorkload = await getWorkload({
+      filterObj: {
+        status: "pending",
+      },
+    });
     const errorSku = pendingWorkload.map((item) => {
       return {
         skuId: item.sku,
         errorDetail: "Aborted",
-        tag: "",
+        tag: "Aborted",
       };
     });
     await abortUpdate({
       filterObj: {
-        $or: [{ status: "pending" }, { status: "inProgress" }],
+        status: "pending",
       },
       infoToUpdate: {
         status: "aborted",
       },
     });
+    const logTable = await findOneTableLog({
+      filterObj: {
+        _id: pendingWorkload[0].logId,
+      },
+    });
+    const updateObj = {};
+    if (logTable) {
+      if (!(logTable.startTime || logTable.endTime)) {
+        updateObj.startTime = Date.now();
+        updateObj.endTime = Date.now();
+      } else if (!logTable.startTime) {
+        updateObj.startTime = Date.now();
+      } else if (!logTable.endTime) {
+        updateObj.endTime = Date.now();
+      }
+      if (!logTable.duration) {
+        updateObj.duration =
+          (logTable.endTime || updateObj.endTime) -
+          (logTable.startTime || updateObj.startTime);
+      }
+    }
     if (pendingWorkload.length) {
       await updateTableLog({
         filterObj: {
@@ -158,11 +187,27 @@ router.post("/v1/abort", async (req, res) => {
         infoToUpdate: {
           errorSku,
           status: "aborted",
+          ...updateObj,
         },
       });
     }
     res.status(200).send({
       status: "success",
+    });
+  } catch (err) {
+    res.status(500).send({
+      status: "error",
+      data: err,
+    });
+  }
+});
+
+router.get("/v1/get/last-import", async (req, res) => {
+  try {
+    const [data] = await getLastImportDetails();
+    res.status(200).send({
+      status: "success",
+      data,
     });
   } catch (err) {
     res.status(500).send({

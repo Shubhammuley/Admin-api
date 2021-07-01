@@ -41,12 +41,19 @@ const checkPendingWorkload = async () => {
   });
 };
 
+const getWorkload = async ({ filterObj }) => {
+  return await workloadModel.find(filterObj);
+};
+
 const getWorkloadDetails = async () => {
   return await workloadModel.aggregate([
     {
       $match: {
         $or: [{ status: 'pending' }, { status: 'inProgress' }],
       },
+    },
+    {
+      $limit : 1,
     },
     {
       $lookup: {
@@ -144,6 +151,10 @@ const insertTableLog = async (logData) => {
   return await logTableModel.create(logData);
 };
 
+const getLastImportDetails = async () => {
+  return await logTableModel.find({ status: "success" }).sort({ "startTime": -1 });
+};
+
 module.exports = Object.freeze({
   getUserByCredential,
   addAdminUser,
@@ -157,4 +168,6 @@ module.exports = Object.freeze({
   checkPendingWorkload,
   getWorkloadDetails,
   abortUpdate,
+  getWorkload,
+  getLastImportDetails,
 });
