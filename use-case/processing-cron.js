@@ -12,7 +12,7 @@ const {
   createMetaField,
 } = require("../third-party-call/big-commerce");
 
-async function processingCron() {
+async function runFunction() {
   const record = await findOneWorkload();
   const { sku } = record || {};
   if (sku) {
@@ -96,7 +96,7 @@ async function processingCron() {
         filterObj: { _id: String(record.logId) },
         infoToUpdate,
       });
-      return null;
+      return true;
     } catch (e) {
       console.log('----e', e);
       await updateWorkload({
@@ -135,10 +135,20 @@ async function processingCron() {
         infoToUpdate,
       });
       // throw e;
+      return true;
     }
   }
-  return "dd"
+  return false
 }
+
+async function processingCron () {
+  for (let i = 0; i < 8; i++) {
+    const check = await runFunction();
+    if(!check) {
+      break;
+    }
+  }
+};
 
 module.exports = Object.freeze({
   processingCron,
