@@ -48,11 +48,15 @@ app.get('/api/v1/list/import-history', async (req, res) => {
     const requestQuery = req.query;
     const pageNo = parseInt(requestQuery.pageNo, 10) || 1;
     const pageSize = parseInt(requestQuery.pageSize, 10) || 10;
+    const startDate = requestQuery.startDate;
+    const endDate = requestQuery.endDate;
     const pageOffset = (pageNo - 1) * pageSize;
     const data = await listTableLog({
       pageNo,
       pageSize,
       pageOffset,
+      startDate,
+      endDate,
     });
     res.send({
       status: 'success',

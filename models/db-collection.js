@@ -87,14 +87,34 @@ const updateTableLog = async ({ filterObj, infoToUpdate }) => {
 };
 
 const listTableLog = async ({
+  startDate,
+  endDate,
   pageNo,
   pageSize,
   pageOffset,
 }) => {
+  const filterObj = {} ;
+  if (startDate && endDate) {
+    filterObj.startDate = {
+      $gte: startDate,
+      $lte: endDate,
+    }
+  }
   const [result] = await logTableModel.aggregate([
+    {
+      $addFields: {
+        startDate: {
+          $dateToString: {
+            format: '%Y-%m-%d',
+            date: '$startTime',
+          },
+        },
+      },
+    },
     {
       $match: {
         status: { $ne: "pending" },
+        ...filterObj,
       },
     }, {
       $project: {
@@ -107,6 +127,7 @@ const listTableLog = async ({
         status: 1,
         errorSku: 1,
         successSku: 1,
+        startDate: 1,
         totalNumberOfRecord: 1,
       }
     },
