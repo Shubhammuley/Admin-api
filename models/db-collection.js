@@ -155,6 +155,10 @@ const getLastImportDetails = async () => {
   return await logTableModel.find({ status: "success" }).sort({ "startTime": -1 });
 };
 
+const deleteLogDetail = async (filterObj) => {
+  return await logTableModel.findOneAndDelete(filterObj);
+};
+
 module.exports = Object.freeze({
   getUserByCredential,
   addAdminUser,
@@ -170,4 +174,5 @@ module.exports = Object.freeze({
   abortUpdate,
   getWorkload,
   getLastImportDetails,
+  deleteLogDetail,
 });

@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors');
 const bodyParser = require("body-parser");
 const db = require('./db-connection');
-const { getUserByCredential, listTableLog } = require('./models/db-collection');
+const { getUserByCredential, listTableLog, deleteLogDetail } = require('./models/db-collection');
 const { processingCron } = require('./use-case/processing-cron');
 const workload = require('./routes/workload');
 const port = process.env.NODE_PORT || 8000;
@@ -71,4 +71,18 @@ app.get('/api/v1/list/import-history', async (req, res) => {
   }
 });
 
+app.delete('/api/v1/delete/import-history/:logId', async (req, res) => {
+  try {
+    const { logId } = req.params;
+    await deleteLogDetail({ _id: logId });
+    res.send({
+      status: 'success',
+    });
+  } catch (e) {
+    console.log('sss', e);
+    res.send({
+      status: 'error'
+    });
+  }
+});
 app.listen(port, () => console.log(`Express server listening on port ${port}`))
