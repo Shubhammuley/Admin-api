@@ -23,10 +23,10 @@ async function getProductByProductId({ sku }) {
     });
 }
 
-async function getAllProductVariantByProductId({ productId }) {
+async function getAllProductVariantByProductId({ productId, page = 1 }) {
   return axios({
     method: "get",
-    url: `${apiEndpoint}/${storeId}/v3/catalog/products/${productId}/variants`,
+    url: `${apiEndpoint}/${storeId}/v3/catalog/products/${productId}/variants?page=${page}`,
     headers,
   })
     .then(({ data, status }) => {

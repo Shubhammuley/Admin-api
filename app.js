@@ -30,13 +30,12 @@ app.post('/api/v1/login', async (req, res) => {
 
 app.get('/api/v1/get', async (req, res) => {
   try {
-    const data = await processingCron(req.query);
+    processingCron(req.query);
     res.send({
       status: 'success',
-      data,
     });
   } catch (e) {
-    console.log('sss', e);
+    console.log('-------------->error', e);
     res.send({
       status: 'error'
     });

@@ -12,8 +12,8 @@ const {
   createMetaField,
 } = require("../third-party-call/big-commerce");
 
-async function runFunction() {
-  const record = await findOneWorkload();
+async function runFunction(record) {
+  // const record = await findOneWorkload();
   const { sku } = record || {};
   if (sku) {
     const log = await findOneTableLog({
@@ -30,14 +30,30 @@ async function runFunction() {
         throw { errorCode: 404, errorMessage: "Product not found" };
       }
       const [product] = data;
-      const productVariants = await getAllProductVariantByProductId({
+      let productVariants = await getAllProductVariantByProductId({
         productId: product.product_id,
+        page: 1,
       });
       if (productVariants.status !== 200) {
         throw { errorCode: 404, errorMessage: "Product variant not found" };
       }
-      const productsData = productVariants.data.data;
-      const variant = productsData.find((item) => item.sku === sku);
+      let productsData = productVariants.data.data;
+      let variant = productsData.find((item) => item.sku === sku);
+      while(!variant) {
+        if(!variant && productVariants.data.meta.pagination.total_pages > productVariants.data.meta.pagination.current_page) {
+          productVariants = await getAllProductVariantByProductId({
+            productId: product.product_id,
+            page: productVariants.data.meta.pagination.current_page + 1,
+          });
+          if (productVariants.status !== 200) {
+            throw { errorCode: 404, errorMessage: "Product variant not found" };
+          }
+          productsData = productVariants.data.data;
+          variant = productsData.find((item) => item.sku === sku);
+        } else {
+          break ;
+        }
+      };
       const variantId = variant.id;
       const metaFields = await getMetaFieldsByProductIdAndVariantId({
         productId: product.product_id,
@@ -89,7 +105,7 @@ async function runFunction() {
         const begin = startTime || start;
         infoToUpdate.duration = infoToUpdate.endTime - begin;
       }
-      if (recordEntered === 1) {
+      if (recordEntered < 6) {
         infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       }
       await updateTableLog({
@@ -127,7 +143,7 @@ async function runFunction() {
         const begin = startTime || start;
         infoToUpdate.duration = infoToUpdate.endTime - begin;
       }
-      if (recordEntered === 1) {
+      if (recordEntered < 6) {
         infoToUpdate.averageDuration = infoToUpdate.endTime - start;
       }
       await updateTableLog({
@@ -142,12 +158,17 @@ async function runFunction() {
 }
 
 async function processingCron () {
-  for (let i = 0; i < 8; i++) {
-    const check = await runFunction();
-    if(!check) {
-      break;
-    }
+  let record = await findOneWorkload();
+  while(record) {
+    await runFunction(record);
+    record = await findOneWorkload();
   }
+  // for (let i = 0; i < 8; i++) {
+  //   const check = await runFunction();
+  //   if(!check) {
+  //     break;
+  //   }
+  // }
 };
 
 module.exports = Object.freeze({
