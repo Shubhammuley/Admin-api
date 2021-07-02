@@ -152,7 +152,7 @@ const insertTableLog = async (logData) => {
 };
 
 const getLastImportDetails = async () => {
-  return await logTableModel.find({ status: "success" }).sort({ "startTime": -1 });
+  return await logTableModel.find({}).sort({ "startTime": -1 }).limit(1);
 };
 
 module.exports = Object.freeze({
